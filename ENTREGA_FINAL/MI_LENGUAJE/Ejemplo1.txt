@@ -1,0 +1,51 @@
+{
+	{
+	    typedef int num_pedido_t;
+	}
+	
+	{
+	    struct pedido_t{
+		  num_pedido_t nump;
+	      int coste;
+	    }
+	}
+	
+	{
+	    def void suma_coste (int & p,int s){
+	      p=p+s;
+	    }
+	    
+	    def int suma_costes (array int lista, int tam){
+	      int total=0;
+	      for(int i=0;i<tam;i=i + 1){
+	        total=total+lista[i];
+	      }
+	      return total;
+	    }
+	}
+	
+	{
+	    array (8) int lista;
+	    int i=0;
+	    while(i<8){
+	      pedido_t p;
+	      p.nump=i;
+	      p.coste=i * 10;
+	      lista[i]=p.coste;
+	      i=i + 1;
+	    }
+	    suma_coste(lista[6],8);	//lista[6] tiene coste 60 y pasa a tener 68
+	    int coste_total=suma_costes(lista,8);	//Sumas todos 0+10+20+30+40+50+68+70 y da 288
+	    int bonus=5;
+	    if(coste_total>100){	//Se mete aqui
+	      coste_total = coste_total - 10 * bonus;
+	    }
+	    else{	//Para que se meta aqui reduce el segundo parametro de sumacostes a 5 o menos
+	       coste_total=coste_total- bonus*10/5;
+	    }
+	    print coste_total; //Da 238 en este ejemplo ya que se mete en el if 
+	}
+}
+
+
+

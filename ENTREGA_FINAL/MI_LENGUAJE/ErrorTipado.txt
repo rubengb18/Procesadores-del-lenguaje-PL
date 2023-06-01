@@ -1,0 +1,47 @@
+{
+	{
+		typedef int t_s;
+	}
+	{
+		struct t_st{
+			int campo1;
+			bool campo2;
+		}
+
+	}
+		{
+		def int suma ( int a , int b ) {
+			int sum=a+b;
+			return sum;
+		}
+	}
+	{
+
+	t_st hola;
+	hola.campo1=true;
+	int x=2 + 3;
+	bool z=8;
+	int s=suma(x,z);
+	bool aaa=hola.campo2; 
+	bool y = false;
+	y=aaa;
+	array(3) int lista;
+	x=lista;
+	print x;
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

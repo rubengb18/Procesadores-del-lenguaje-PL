@@ -1,0 +1,51 @@
+//EJEMPLO1-MULTIPLICACION DE MATRICES 3x3 CON SALIDA POR PARAMETRO
+{		
+	{
+		def void muestraMatriz(array (3) array (3) int l){
+			int j;
+			int muestra;
+			for(int i=0;i<3;i=i + 1){
+				j=0;
+				while(j<3){
+					muestra=l[i][j];
+					print muestra;
+					j=j+ 1;
+				}
+			}
+		}
+		
+		def void multiplica(array(3) array(3) int matrizA, array(3) array(3) int matrizB, array(3) array(3) int & producto){
+			int suma; 
+			for(int i=0;i<3;i=i + 1){
+				for(int j=0;j<3;j=j + 1){
+			        suma = 0;
+			        for (int k = 0; k < 3; k=k + 1) {
+			            suma = suma + matrizA[i][k] * matrizB[k][j];
+			        }
+			        producto[i][j] = suma;			        
+			    }
+			}
+		}
+		
+		def void rellenaMatriz(array(3) array(3) int & l){
+			int cont=1;
+			for(int i=0;(i<3) and (i<4);i=i + 1){
+				for(int j=0;j<3;j=j + 1){
+					l[i][j]=cont;
+					cont=cont+ 1;
+				}
+			
+			}
+		}
+	}
+
+	{
+		array(3) array(3) int m1;
+		array(3) array(3) int m2;
+		array(3) array(3) int prod;
+		rellenaMatriz(m1);
+		rellenaMatriz(m2);
+		multiplica(m1,m2,prod);
+		muestraMatriz(prod);	//La muestra por filas
+	}
+}

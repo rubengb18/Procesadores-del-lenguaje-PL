@@ -1,0 +1,66 @@
+{
+	{
+			typedef int t_num;
+			typedef array (3) int t_lista3;
+			typedef bool t_bool;
+	}
+	
+	{
+		struct t_st{
+			t_lista3 a;
+			t_num b;
+		}
+	}
+	
+	{
+	
+		def int resta ( int c , int  d ) {
+			int sum=c-d;
+			return sum;
+		}
+		def int suma ( int & g , int h ) {
+			g=60;
+			int s=g+h+ 1241;
+			return s;
+		}
+		
+
+		
+		def bool decide ( bool & t , bool & f ) {
+			bool decision;
+			if (t==true) {
+				decision=true;
+			}
+			else {
+				decision=false;
+				f=true;
+			}
+			return decision;
+		}
+		
+	}
+	
+	{
+		bool v1=true;
+		bool v2=false;
+		bool var=decide(v1,v2);
+		int x=100;
+		int x=200;
+		int y=100;
+		t_st varst;
+		int z=suma(x,y);
+		varst.b=160;
+		int pipi=suma(varst.a[1],varst.b);
+		int x=varst.a[1];
+		int y=varst.b;
+		int saca1=varst.a[0];
+		varst.a[0]=0;
+		varst.a[1]=18;
+		int saca2=varst.b;
+		varst.b=0;
+		int saca3=varst.a[varst.a[0] + 1];
+		int res= resta(5 + 5,2 + 2);
+		print pipi;
+		print res;
+	}
+}

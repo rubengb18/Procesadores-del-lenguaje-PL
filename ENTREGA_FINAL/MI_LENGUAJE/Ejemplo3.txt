@@ -1,0 +1,31 @@
+//EJEMPLO3-CALCULO DEL NUMERO COMBINATORIO N SOBRE M
+{
+	{
+	   def int factorial(int n) {
+	       int ret=0;	
+		   if(n == 0){
+		    	ret= 1;
+		   }
+		   else{
+		   		int fact=factorial(n - 1);
+		    	ret= n * fact;
+		   }
+		   return ret;
+		}
+		
+		def int numCombinatorio (int n, int m){				//n sobre m= n!/m!(n-m)!
+			int numerador=factorial(n);
+			int denominador1=factorial(m);
+			int denominador2=factorial(n - m);
+			int ret=numerador/(denominador1 * denominador2);
+			return ret;
+		}
+	}
+	
+	{
+	    int n=10;
+	    int m=2;
+	    int res=numCombinatorio(n,m);
+	    print res;
+	}
+}

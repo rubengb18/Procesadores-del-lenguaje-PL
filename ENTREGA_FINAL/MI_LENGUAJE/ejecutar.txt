@@ -1,0 +1,6 @@
+java -cp jflex.jar jflex.Main AnalizadorLexicoTiny.l
+java -cp cup.jar java_cup.Main -parser AnalizadorSintacticoTiny -symbols ClaseLexica -nopositions Tiny.cup
+java -cp cup.jar java_cup.Main -parser ConstructorASTTiny -symbols ClaseLexica -nopositions ConstructorAST.cup
+
+wat2wasm.exe codigo.wat
+node main-memory.js

@@ -1,0 +1,49 @@
+{	
+	
+	{
+	
+	
+		def void rellenaLista(array(3) array(2) int & l){
+				int j;
+				int m;
+				int i=0;
+				while(i<3){
+					j=0;
+					while(j<2){
+						l[i][j]=50+i*3;
+						j=j+ 1;
+					}
+					i=i + 1;
+				}
+				
+		}
+		
+		
+		def void muestraLista(array(3) array(2) int l1){
+			int c;
+			int muestra;
+			for(int f=0;f<3;f=f + 1){
+				c=0;
+				while(c<2){
+					muestra=l1[f][c];
+					print muestra;
+					c=c+ 1;
+				}
+			}
+		}
+	}
+
+	{
+		array int prueba=[0,1,2,3,4];
+		int imprime=prueba[2];
+		array (3) array (2) int lista2; 
+		lista2[0][0]=100;
+		lista2[1][0]=100;
+		int sum=lista2[0][0]+lista2[1][0];
+		array (3) array (2) int lista;
+		rellenaLista(lista);
+		muestraLista(lista);
+		print imprime;
+		print sum;
+	}
+}

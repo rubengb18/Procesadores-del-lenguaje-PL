@@ -1,0 +1,497 @@
+package constructorast;
+
+import java_cup.runtime.*;
+import alex.AnalizadorLexicoTiny;
+import alex.UnidadLexica;
+import alex.TokenValue;
+import errors.GestionErroresTiny;
+import ast.*;
+
+scan with {: return getScanner().next_token(); :};
+//action code {:
+//   ... add some code to declare and initialize e.g. variables used by the code embedded in the grammar
+//:};
+parser code {: 
+   private GestionErroresTiny errores;
+   public void syntax_error(Symbol unidadLexica) {
+     errores.errorSintactico((UnidadLexica)unidadLexica);
+   }
+:};
+init with {: 
+   errores = new GestionErroresTiny();
+   AnalizadorLexicoTiny alex = (AnalizadorLexicoTiny)getScanner();
+   alex.fijaGestionErrores(errores);
+:};
+
+
+terminal   MAS,TYPEDEF,STRUCT,
+             MENOS, POR, DIV, IGUAL, COMA, PAP, PCIERRE,
+             MAYOR,MENOR,IGUALCOMP,DIST,IF,WHILE,PUNTOCOMA,LCI,LAP,
+             AND,OR,ELSE,DEF,RET,PRINT,READ,NEW,FOR,PUNTO;
+
+terminal TokenValue ENT,IDEN,T,F,INT_0,B,ARRAY,VOID,ASP,CORAP,CORCI;
+
+non terminal  E Expb, Exp, Term,Termb, Fact,Factb,Fact_id,Fact_num,ENUM_NUM,ENUM_B,LISTA,ENUM_LISTA,Fact_st,Lista_pos,Fact_elem_l;
+non terminal T Fact_tipo, Fact_tipo_array, Void,Fact_tipo_ptr;
+non terminal I Def,Asig,Asig_for,LISTA_DEF,ESC,LEC,IF_I,WHILE_I,RET_I,BLOQ_I,CALL_F,FOR_I,CALL_FVOID;
+non terminal P PARAM, LISTA_PARAM,LISTA_PARAM_CALL,PARAM_CALL;
+non terminal D DEF_FUN,BLOQ_D;
+non terminal STRUCT ST,BLOQ_ST;
+non terminal TDEF TYDEF,BLOQ_TDEF;
+non terminal INI Ini;
+
+//INICIO
+   
+	Ini ::= LAP LAP BLOQ_TDEF : bloq1 LCI LAP BLOQ_ST : bloq2 LCI LAP BLOQ_D : bloq3 LCI LAP BLOQ_I : bloq4 LCI LCI
+	   {: RESULT=new Inicio(bloq1,bloq2,bloq3,bloq4); :}; 
+	   
+	Ini ::= LAP  LAP BLOQ_ST : bloq2 LCI LAP BLOQ_D : bloq3 LCI LAP BLOQ_I : bloq4 LCI LCI
+	   {: RESULT=new Inicio(bloq2,bloq3,bloq4); :};
+	   
+	Ini ::= LAP LAP BLOQ_D : bloq3 LCI LAP BLOQ_I : bloq4 LCI LCI
+	   {: RESULT=new Inicio(bloq3,bloq4); :};
+	   
+	Ini ::= LAP LAP BLOQ_I : bloq4 LCI LCI
+	   {: RESULT=new Inicio(bloq4); :};
+	
+	Ini ::= LAP LAP BLOQ_TDEF : bloq1 LCI LAP BLOQ_ST : bloq2 LCI  LAP BLOQ_I : bloq4 LCI LCI
+	   {: RESULT=new Inicio(bloq1,bloq2,bloq4); :}; 
+	   
+	Ini ::= LAP LAP BLOQ_TDEF : bloq1 LCI LAP BLOQ_D : bloq3 LCI LAP BLOQ_I : bloq4 LCI LCI
+	   {: RESULT=new Inicio(bloq1,bloq3,bloq4); :}; 
+	   
+	Ini ::= LAP LAP BLOQ_ST : bloq2 LCI LAP BLOQ_I : bloq4 LCI LCI
+	   {: RESULT=new Inicio(bloq2,bloq4); :}; 
+	   
+	Ini ::= LAP LAP BLOQ_TDEF : bloq1 LCI LAP BLOQ_I : bloq4 LCI LCI
+	   {: RESULT=new Inicio(bloq1,bloq4); :}; 
+   
+   
+//Expresiones binarias
+
+	Exp ::= Exp: aDeexp1 MAS Term: aDeterm 
+	   {: RESULT= new EBin(KindE.SUMA,aDeexp1,aDeterm); :};
+	Exp ::= Exp: aDeexp1 MENOS Term: aDeterm 
+	   {: RESULT= new EBin(KindE.RES,aDeexp1,aDeterm); :};  
+	
+	Exp ::= Term: aDeterm
+	   {: RESULT=aDeterm; :};
+	Term ::= Term: aDeterm1 POR Fact: aDefact 
+	   {: RESULT= new EBin(KindE.MUL,aDeterm1,aDefact); :};
+	Term ::= Term: aDeterm1 DIV Fact: aDefact 
+	   {: RESULT= new EBin(KindE.DIV,aDeterm1,aDefact); :};
+	Term ::= Fact: aDefact
+	   {: RESULT=aDefact; :};
+   
+	    
+	Fact ::= ENT: numValue           
+	   {: RESULT = new Num(numValue.lexema); :};
+	Fact ::= Fact_st: st           
+	   {: RESULT = st; :};
+	Fact ::= PAP Exp: aDeexp PCIERRE
+	   {: RESULT = aDeexp; :};
+	Fact ::= Fact_elem_l: st           
+	   {: RESULT = st; :};   
+	
+	Expb ::= Exp: aDeexp1 IGUALCOMP Term: aDeexp2 
+	   {: RESULT= new EBin(KindE.IGUALCOMP,aDeexp1,aDeexp2); :};
+	Expb ::= Exp: aDeexp1 MAYOR Term: aDeexp2 
+	   {: RESULT= new EBin(KindE.MAYOR,aDeexp1,aDeexp2); :};
+	Expb ::= Exp: aDeexp1 MENOR Term: aDeexp2 
+	   {: RESULT= new EBin(KindE.MENOR,aDeexp1,aDeexp2); :};
+	Expb ::= Exp: aDeexp1 DIST Term: aDeexp2 
+	   {: RESULT= new EBin(KindE.DIST,aDeexp1,aDeexp2); :};
+	  
+	  	Expb ::= Exp: aDeexp1 IGUALCOMP Termb: aDeexp2 
+	   {: RESULT= new EBin(KindE.IGUALCOMP,aDeexp1,aDeexp2); :};
+		Expb ::= Exp: aDeexp1 DIST Termb: aDeexp2 
+	   {: RESULT= new EBin(KindE.DIST,aDeexp1,aDeexp2); :};
+	   
+	Expb ::= Expb: aDeexp1 IGUALCOMP Termb: aDeexp2 
+	   {: RESULT= new EBin(KindE.IGUALCOMP,aDeexp1,aDeexp2); :};
+	Expb ::= Expb: aDeexp1 MAYOR Termb: aDeexp2 
+	   {: RESULT= new EBin(KindE.MAYOR,aDeexp1,aDeexp2); :};
+	Expb ::= Expb: aDeexp1 MENOR Termb: aDeexp2 
+	   {: RESULT= new EBin(KindE.MENOR,aDeexp1,aDeexp2); :};
+	Expb ::= Expb: aDeexp1 DIST Termb: aDeexp2 
+	   {: RESULT= new EBin(KindE.DIST,aDeexp1,aDeexp2); :};
+	   
+	Expb ::= Termb: aDeterm
+	   {: RESULT=aDeterm; :};
+	
+	Termb ::= Termb: aDeexp1 AND Factb: aDeexp2 
+	   {: RESULT= new EBin(KindE.AND,aDeexp1,aDeexp2); :};
+	Termb ::= Termb: aDeexp1 OR Factb: aDeexp2 
+	   {: RESULT= new EBin(KindE.OR,aDeexp1,aDeexp2); :};
+	Termb ::= Factb: aDefact
+	   {: RESULT=aDefact; :};
+	Factb ::= T:tt 
+	   {: RESULT= new Bool(tt.lexema); :};
+	Factb ::= F:ff 
+	   {: RESULT= new Bool(ff.lexema); :};
+	Factb ::= PAP Expb: aDeexp PCIERRE
+	   {: RESULT = aDeexp; :};
+
+
+	   
+	//Acceso a los campos de un struct
+	
+	Fact_st ::= Fact_id : id
+		{: RESULT = id; :};
+	
+	Fact_st ::= Fact_id : id PUNTO Fact_st : st
+		{: RESULT = new EBin(KindE.PUNTO,id,st); :};
+		
+		
+	//Acceso a elementos de array
+		
+	Lista_pos ::= CORAP Exp : e CORCI
+		{: RESULT = e; :};
+		
+	Lista_pos ::= CORAP error CORCI;
+	
+	Fact_elem_l ::= Fact_elem_l : acc1 Lista_pos : l
+		{: RESULT = new EBin(KindE.ACCESO,acc1,l); :};
+
+	Fact_elem_l ::= Fact_st : acc1 Lista_pos : l
+		{: RESULT = new EBin(KindE.ACCESO,acc1,l); :};
+	   
+	   
+//LISTAS
+
+	ENUM_NUM ::= Fact_num : n COMA ENUM_NUM : l
+		{: RESULT= new Lista(n,l,new Tipo("int")); :};
+	
+	ENUM_NUM ::= Fact_num : n error ENUM_NUM : l;
+	
+	ENUM_NUM ::= Fact_num : n
+		{: RESULT= new Lista(n,new Tipo("int")); :};
+		
+	ENUM_B ::= 	Factb : n COMA ENUM_B : l
+		{: RESULT= new Lista(n,l,new Tipo("bool")); :};
+	
+	ENUM_B ::= 	Factb : n
+		{: RESULT= new Lista(n,new Tipo("bool")); :};
+		
+	LISTA ::= CORAP : c1 ENUM_NUM : l CORCI : c2
+		{: RESULT = new Lista(l,c1.lexema,c2.lexema,new Tipo("array")); :};  
+		
+	LISTA ::= CORAP : c1 ENUM_B : l CORCI : c2
+		{: RESULT = new Lista(l,c1.lexema,c2.lexema,new Tipo("array")); :};  
+	
+	LISTA ::= CORAP: c1 ENUM_LISTA : l CORCI :c2
+		{: RESULT = new Lista(l,c1.lexema,c2.lexema,new Tipo("array")); :};  
+	 
+	ENUM_LISTA ::= LISTA : n COMA ENUM_LISTA : l
+		{: RESULT= new Lista(n,l,new Tipo("array")); :};
+	
+	ENUM_LISTA ::= LISTA : n
+		{: RESULT= new Lista(n,new Tipo("array")); :};
+
+
+//Asignaciones
+
+
+	Fact_id ::= IDEN: Value
+		{: RESULT = new Id(Value.lexema); :};
+	
+	Fact_num ::= ENT: numValue           
+	   {: RESULT = new Num(numValue.lexema); :};
+		
+	Asig ::= Fact_st: IdValue IGUAL Exp: aDeexp PUNTOCOMA 
+		{: RESULT= new Asig(IdValue,aDeexp); :};
+		
+	Asig_for ::= Fact_id: IdValue IGUAL Exp: aDeexp 
+		{: RESULT= new Asig(IdValue,aDeexp); :};
+		
+	Asig ::= Fact_elem_l: IdValue IGUAL Exp: aDeexp PUNTOCOMA 
+		{: RESULT= new Asig(IdValue,aDeexp); :};
+		
+	Asig ::= Fact_st: IdValue IGUAL Expb: aDeexp PUNTOCOMA 
+		{: RESULT= new Asig(IdValue,aDeexp); :};
+
+	Asig ::= Fact_elem_l: IdValue IGUAL Expb: aDeexp PUNTOCOMA 
+		{: RESULT= new Asig(IdValue,aDeexp); :};
+		
+	Asig ::= Fact_tipo:tipo Fact_id: IdValue IGUAL Exp: aDeexp PUNTOCOMA
+		{: RESULT= new Asig(new Def(tipo,IdValue),aDeexp); :};
+		
+	Asig ::= Fact_tipo:tipo Fact_id: IdValue IGUAL Expb: aDeexp PUNTOCOMA
+		{: RESULT= new Asig(new Def(tipo,IdValue),aDeexp); :};
+		
+	Asig ::= Fact_tipo_array:tipo Fact_id: IdValue IGUAL ENUM_LISTA: aDeexp PUNTOCOMA
+		{: RESULT= new Asig(new Def(tipo,IdValue),new Lista(aDeexp,tipo)); :};
+		
+	Asig ::= Fact_tipo_array:tipo Fact_id: IdValue IGUAL Fact_st: aDeexp PUNTOCOMA
+		{: RESULT= new Asig(new Def(tipo,IdValue),aDeexp); :};
+	
+	Asig ::= Fact_tipo_array:tipo Fact_id: IdValue IGUAL Fact_elem_l: aDeexp PUNTOCOMA
+		{: RESULT= new Asig(new Def(tipo,IdValue),aDeexp); :};
+		
+	Asig ::= Fact_st: IdValue IGUAL ENUM_LISTA: aDeexp PUNTOCOMA
+		{: RESULT= new Asig(IdValue,aDeexp); :};
+		
+	Asig ::= Fact_elem_l: IdValue IGUAL ENUM_LISTA: aDeexp PUNTOCOMA
+		{: RESULT= new Asig(IdValue,aDeexp); :};
+		
+	//Asigna el valor devuelto por una funcion
+	
+	Asig ::= Fact_st: IdValue IGUAL CALL_F: aDeexp PUNTOCOMA 
+		{: RESULT= new Asig(IdValue,aDeexp); :};
+		
+	Asig ::= Fact_tipo:tipo Fact_id: IdValue IGUAL CALL_F: aDeexp PUNTOCOMA
+		{: RESULT= new Asig(new Def(tipo,IdValue),aDeexp); :};
+		
+	Asig ::= Fact_tipo_array:tipo Fact_id: IdValue IGUAL CALL_F: aDeexp PUNTOCOMA
+		{: RESULT= new Asig(new Def(tipo,IdValue),aDeexp); :};
+		
+
+//Definicion
+
+	Def ::= Fact_tipo:t Fact_id: id 
+		{: RESULT= new Def(t,id); :};
+
+	Def ::= Fact_tipo:t Fact_id: id PUNTOCOMA
+		{: RESULT= new Def(t,id); :};
+		
+	Def ::= Fact_tipo_array:t Fact_id: id
+		{: RESULT= new Def(t,id); :};
+		
+	Def ::= Fact_tipo_array:t Fact_id: id PUNTOCOMA 
+		{: RESULT= new Def(t,id); :};
+		
+	Def ::= Fact_tipo_ptr : t Fact_id: id IGUAL NEW Fact_tipo : t2 PUNTOCOMA
+		{: RESULT= new Def(t,id,t2); :};
+		
+	Def ::= Fact_tipo_ptr : t Fact_id: id IGUAL NEW Fact_tipo : t2
+		{: RESULT= new Def(t,id,t2); :};
+		
+	LISTA_DEF ::= Def : t LISTA_DEF : l
+		{: RESULT = new Def(t,l); :};
+	
+	LISTA_DEF ::= Def : t
+		{: RESULT = t; :};
+		
+	
+	
+//Tipos
+
+	
+	Fact_tipo ::= INT_0: tipo
+		{: RESULT = new Tipo(tipo.lexema); :};
+		
+	Fact_tipo ::= B: tipo
+		{: RESULT = new Tipo(tipo.lexema); :};
+	
+	Fact_tipo ::= IDEN: tipo
+		{: RESULT = new Tipo(tipo.lexema); :};
+		
+	Fact_tipo_array ::= ARRAY: array Fact_tipo:tipo
+		{: RESULT = new Tipo(array.lexema,tipo); :};
+		
+	Fact_tipo_array ::= ARRAY: array Fact_tipo_array:tipo
+		{: RESULT = new Tipo(array.lexema,tipo); :};
+		
+	Fact_tipo_array ::= ARRAY: array PAP Exp:e PCIERRE Fact_tipo:tipo
+		{: RESULT = new Tipo(array.lexema,tipo,e); :};
+		
+	Fact_tipo_array ::= ARRAY: array PAP Exp:e PCIERRE Fact_tipo_array:tipo
+		{: RESULT = new Tipo(array.lexema,tipo,e); :};
+		
+	Fact_tipo_ptr ::= POR Fact_tipo :t 
+		{: RESULT = t; :};
+
+
+//Typedef
+
+	TYDEF ::= TYPEDEF Fact_tipo: tipo Fact_id: value PUNTOCOMA
+		{: RESULT = new Typedef(tipo,value); :};
+	TYDEF ::= TYPEDEF Fact_tipo_array: tipo Fact_id: value PUNTOCOMA
+		{: RESULT = new Typedef(tipo,value); :};
+	TYDEF ::= TYPEDEF error Fact_id: value PUNTOCOMA;
+	
+	BLOQ_TDEF ::= TYDEF:t BLOQ_TDEF : l
+		{: RESULT = new Typedef(t,l); :};
+	
+	BLOQ_TDEF ::= TYDEF:t
+		{: RESULT = t; :};
+
+	
+	
+//Struct
+
+	ST ::= STRUCT Fact_id: iden LAP LISTA_DEF: l LCI
+		{: RESULT = new Struct0(l,iden); :};
+		
+	ST ::= STRUCT error LAP LISTA_DEF: l LCI;
+	
+	BLOQ_ST ::= ST:st BLOQ_ST : l
+		{: RESULT = new Struct0(st,l); :};
+	
+	BLOQ_ST ::= ST:st
+		{: RESULT = st; :};
+		
+
+//Escritura
+
+	ESC ::= PRINT Fact_id : id PUNTOCOMA
+		{: RESULT = new Esc(id); :};
+		
+	ESC ::=PRINT error PUNTOCOMA;
+
+//Lectura
+
+	LEC ::= READ Fact_id : id PUNTOCOMA
+		{: RESULT = new Lec(id); :};
+	LEC ::= READ error PUNTOCOMA;
+	
+//IF
+
+	IF_I ::= IF Expb : e LAP BLOQ_I:bloq LCI
+		{: RESULT = new If(e,bloq); :};
+		
+	IF_I ::= IF Expb : e LAP BLOQ_I:bloq LCI ELSE LAP BLOQ_I:bloq2 LCI
+		{: RESULT = new If(e,bloq,bloq2); :};
+		
+	IF_I ::= IF Expb : e LAP BLOQ_I:bloq LCI error LAP BLOQ_I:bloq2 LCI;
+	IF_I ::= IF error LAP BLOQ_I:bloq LCI ELSE LAP BLOQ_I:bloq2 LCI;
+		
+	
+//WHILE
+
+	WHILE_I ::= WHILE Expb : e LAP BLOQ_I:bloq LCI
+		{: RESULT = new While(e,bloq); :};
+	WHILE_I ::= WHILE error LAP BLOQ_I:bloq LCI;
+		
+//FOR
+
+	FOR_I ::= FOR PAP Asig : asig Expb : cond PUNTOCOMA Asig_for : it PCIERRE LAP BLOQ_I:bloq LCI
+		{: RESULT = new For(asig,cond,it,bloq); :};
+	FOR_I ::= FOR PAP error Expb : cond PUNTOCOMA Asig_for : it PCIERRE LAP BLOQ_I:bloq LCI;
+	FOR_I ::= FOR PAP Asig : asig error PUNTOCOMA Asig_for : it PCIERRE LAP BLOQ_I:bloq LCI;
+	FOR_I ::= FOR PAP Asig : asig Expb : cond PUNTOCOMA error LAP BLOQ_I:bloq LCI;
+	FOR_I ::= FOR PAP Asig : asig Expb : cond PUNTOCOMA Asig_for : it PCIERRE LAP error LCI;
+		
+//RETURN
+
+	RET_I ::= RET Fact : id PUNTOCOMA
+		{: RESULT = new Ret(id); :};
+	RET_I ::= RET error PUNTOCOMA;
+		
+//CALL FUNCION
+	//Sin parametros
+	CALL_F ::= Fact_id : id PAP PCIERRE PUNTOCOMA 
+				{: RESULT = new Call_Fun(id); :};
+				
+	//Con parametros
+	CALL_F ::= Fact_id : id PAP LISTA_PARAM_CALL : p PCIERRE  
+				{: RESULT = new Call_Fun(id,p); :};
+	CALL_FVOID ::= Fact_id : id PAP LISTA_PARAM_CALL : p PCIERRE PUNTOCOMA
+				{: RESULT = new Call_Fun(id,p); :};
+	CALL_FVOID ::= Fact_id : id error LISTA_PARAM_CALL : p PCIERRE PUNTOCOMA;
+	
+//Bloque de instrucciones
+
+	
+	BLOQ_I ::= Def : i BLOQ_I : l 
+		{: RESULT = new Bloq_I(i,l); :};
+	BLOQ_I ::= Asig : i BLOQ_I : l 
+		{: RESULT = new Bloq_I(i,l); :};
+	BLOQ_I ::= LEC : i BLOQ_I : l 
+		{: RESULT = new Bloq_I(i,l); :};
+	BLOQ_I ::= ESC : i BLOQ_I : l 
+		{: RESULT = new Bloq_I(i,l); :};	
+	BLOQ_I ::= IF_I : i BLOQ_I : l 
+		{: RESULT = new Bloq_I(i,l); :};
+	BLOQ_I ::= WHILE_I : i BLOQ_I : l 
+		{: RESULT = new Bloq_I(i,l); :};	
+	BLOQ_I ::= CALL_FVOID : i BLOQ_I : l 
+		{: RESULT = new Bloq_I(i,l); :};
+	BLOQ_I ::= FOR_I : i BLOQ_I : l 
+		{: RESULT = new Bloq_I(i,l); :};
+		
+		
+	BLOQ_I ::= Def : i 
+		{: RESULT = new Bloq_I(i); :};
+	BLOQ_I ::= Asig : i 
+		{: RESULT = new Bloq_I(i); :};	
+	BLOQ_I ::= LEC : i 
+		{: RESULT = new Bloq_I(i); :};
+	BLOQ_I ::= ESC : i 
+		{: RESULT = new Bloq_I(i); :};
+	BLOQ_I ::= IF_I : i 
+		{: RESULT = new Bloq_I(i); :};
+	BLOQ_I ::= WHILE_I : i 
+		{: RESULT = new Bloq_I(i); :};
+	BLOQ_I ::= CALL_FVOID : i 
+		{: RESULT = new Bloq_I(i); :};
+	BLOQ_I ::= FOR_I : i 
+		{: RESULT = new Bloq_I(i); :};
+	
+// Definicion de funciones
+
+	Void ::= VOID:t
+		{: RESULT = new Tipo(t.lexema); :};
+		
+	//Sin parametros
+	
+		DEF_FUN ::= DEF Fact_tipo : t Fact_id : id PAP PCIERRE LAP BLOQ_I : bloq RET_I : ret LCI 
+			{: RESULT = new Def_Fun(t,id,bloq,ret); :};
+			
+		DEF_FUN ::= DEF Fact_tipo_array : t Fact_id : id PAP PCIERRE LAP BLOQ_I : bloq RET_I : ret LCI 
+			{: RESULT = new Def_Fun(t,id,bloq,ret); :};
+			
+		DEF_FUN ::= DEF Void : t Fact_id : id PAP PCIERRE LAP BLOQ_I : bloq LCI 
+			{: RESULT = new Def_Fun(t,id,bloq); :};
+	//Con parametros
+	
+		DEF_FUN ::= DEF Fact_tipo : t Fact_id : id PAP LISTA_PARAM : p PCIERRE LAP BLOQ_I : bloq RET_I : ret LCI 
+			{: RESULT = new Def_Fun(t,id,bloq,p,ret); :};
+			
+		DEF_FUN ::= DEF Fact_tipo_array : t Fact_id : id PAP LISTA_PARAM : p PCIERRE LAP BLOQ_I : bloq RET_I : ret LCI 
+			{: RESULT = new Def_Fun(t,id,bloq,p,ret); :};
+			
+		DEF_FUN ::= DEF Void : t Fact_id : id PAP LISTA_PARAM : p PCIERRE LAP BLOQ_I : bloq LCI 
+			{: RESULT = new Def_Fun(t,id,bloq,p); :};
+			
+	//Parametros
+		
+		LISTA_PARAM ::= PARAM : p COMA LISTA_PARAM : l
+			{: RESULT = new Param(p,l); :};
+			
+		LISTA_PARAM ::= PARAM : p error LISTA_PARAM : l;
+			
+		LISTA_PARAM ::= PARAM : p
+			{: RESULT = p; :};
+			
+		PARAM ::= Fact_tipo : t Fact_id : id 
+			{: RESULT = new Param(t,id); :};
+			
+		PARAM ::= Fact_tipo : t ASP : a Fact_id : id 
+			{: RESULT = new Param(t,a.lexema,id); :};
+			
+		PARAM ::= Fact_tipo_array : t Fact_id : id 
+			{: RESULT = new Param(t,id); :};
+			
+		PARAM ::= Fact_tipo_array : t ASP : a Fact_id : id 
+			{: RESULT = new Param(t,a.lexema,id); :};
+			
+		LISTA_PARAM_CALL ::= PARAM_CALL : p COMA LISTA_PARAM_CALL : l
+			{: RESULT = new Param(p,l); :};
+			
+		LISTA_PARAM_CALL ::= PARAM_CALL : p
+			{: RESULT = p; :};
+			
+		PARAM_CALL ::=  Exp : id 
+			{: RESULT = new Param(id); :};
+			
+	//Bloque funciones
+		
+		BLOQ_D ::= DEF_FUN : f BLOQ_D : bloq
+			{: RESULT = new Bloq_D(f,bloq); :};
+		
+		BLOQ_D ::= DEF_FUN : f
+			{: RESULT = new Bloq_D(f); :};
+	
+	
+	
